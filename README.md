@@ -124,25 +124,46 @@ without `react-redux`, we lose many convenient functions, you should use the onl
 
 # HMR
 
-From Redux 2.0, no implicitly reload reducers, so do it yourself explicitly, for example:
+From Redux 2.0, no implicit reload for reducers any more, so do it yourself explicitly, for example:
+
 ~~~JavaScript
+// file: store/configureStore.js
 import reducers from "./reducers"
 import { createStore } from "redux"
 
-let store = createStore(reducers)
+// these codes works for `webpack-dev-server` too.
+function configureStore(initState) {
+  let store = createStore(reducers, initState)
 
-if (module.hot) {
-  module.hot.accept("./reducers", ()=>{
-    store.replaceReducer(require("./reducers".default));
+  if (module.hot) {
+    module.hot.accept("./reducers", ()=>{
+      store.replaceReducer(require("./reducers".default));
+    }
   }
+  
+  return store
 }
+~~~
+
+~~~JavaScript
+// file: index.js
+// ...
+import configureStore from './store/configureStore'
+
+let store = configureStore()
 
 // ...
 ~~~
 
-If you want to reload other module like components, a simple way is to add `module.hot.accept()` in your code, however, this leads to a warning or maybe an error: _warning.js?8f69:14 <Provider> does not support changing `store` on the fly. It is most likely that you see this error because you updated to Redux 2.x and React Redux 2.x which no longer hot reload reducers automatically. See https://github.com/reactjs/react-redux/releases/tag/v2.0.0 for the migration instructions._
 
-**// TODO: I will figured it out later. The more I read, the more confused.**
+## Working with `webpack-dev-server`
+
+Using above codes is ok, just `module.hot.accept()` seems to work too. Stateless function leads to page refreshing.
+
+
+## Working with `webpack-hot-middleware`
+
+Stateless function component is not supported and page won't be refreshed automatically in my practice, a simple way is to add `module.hot.accept()` in the file which renders the <Provide> component. However, this leads to a warning or maybe an error: _<Provider> does not support changing `store` on the fly. It is most likely that you see this error because you updated to Redux 2.x and React Redux 2.x which no longer hot reload reducers automatically. See https://github.com/reactjs/react-redux/releases/tag/v2.0.0 for the migration instructions._
 
 
 # References
