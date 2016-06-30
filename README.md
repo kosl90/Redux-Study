@@ -163,7 +163,9 @@ Using above codes is ok, just `module.hot.accept()` seems to work too. Stateless
 
 ## Working with `webpack-hot-middleware`
 
-Stateless function component is not supported and page won't be refreshed automatically in my practice, a simple way is to add `module.hot.accept()` in the file which renders the <Provide> component. However, this leads to a warning or maybe an error: _<Provider> does not support changing `store` on the fly. It is most likely that you see this error because you updated to Redux 2.x and React Redux 2.x which no longer hot reload reducers automatically. See https://github.com/reactjs/react-redux/releases/tag/v2.0.0 for the migration instructions._
+Stateless function component is not supported and page won't be refreshed automatically in my practice, a simple way is to add `module.hot.accept()` in the file which renders the <Provide> component. However, this leads to a warning or maybe an error:
+
+> `<Provider>` does not support changing `store` on the fly. It is most likely that you see this error because you updated to Redux 2.x and React Redux 2.x which no longer hot reload reducers automatically. See https://github.com/reactjs/react-redux/releases/tag/v2.0.0 for the migration instructions.
 
 
 # References
