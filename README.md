@@ -119,7 +119,176 @@ without `react-redux`, we lose many convenient functions, you should use the onl
 
 # Async Redux
 
-// TODO
+We map a few states to one async action, like request, succeed, failed. Because the original `dispatch` just accepts plain object and we have to process several states, we have to perform AJAX calls inside our components. For example:
+
+~~~JavaScript
+// file: actionCreators.js
+export function loadPostsSuccess(userId, response) {
+  return {
+    type: 'LOAD_POSTS_SUCCESS',
+    userId,
+    response
+  }
+}
+
+export function loadPostsFailure(userId, error) {
+  return {
+    type: 'LOAD_POSTS_FAILURE',
+    userId,
+    error
+  }
+}
+
+export function loadPostsRequest(userId) {
+  return {
+    type: 'LOAD_POSTS_REQUEST',
+    userId
+  }
+}
+~~~
+
+~~~JavaScript
+// file: UserInfo.js
+import { Component } from 'react'
+import { connect } from 'react-redux'
+import { loadPostsRequest, loadPostsSuccess, loadPostsFailure } from './actionCreators'
+
+class Posts extends Component {
+  loadData(userId) {
+    // Injected into props by React Redux `connect()` call:
+    let { dispatch, posts } = this.props
+
+    if (posts[userId]) {
+      // There is cached data! Don't do anything.
+      return
+    }
+
+    // Reducer can react to this action by setting
+    // `isFetching` and thus letting us show a spinner.
+    dispatch(loadPostsRequest(userId))
+
+    // Reducer can react to these actions by filling the `users`.
+    fetch(`http://myapi.com/users/${userId}/posts`).then(
+      response => dispatch(loadPostsSuccess(userId, response)),
+      error => dispatch(loadPostsFailure(userId, error))
+    )
+  }
+
+  componentDidMount() {
+    this.loadData(this.props.userId)
+  }
+
+  componentWillReceiveProps(nextProps) {
+    if (nextProps.userId !== this.props.userId) {
+      this.loadData(nextProps.userId)
+    }
+  }
+
+  render() {
+    if (this.props.isFetching) {
+      return <p>Loading...</p>
+    }
+
+    let posts = this.props.posts.map(post =>
+      <Post post={post} key={post.id} />
+    )
+
+    return <div>{posts}</div>
+  }
+}
+
+export default connect(state => ({
+  posts: state.posts
+}))(Posts)
+~~~
+
+Good news is middleware lets us write more expressive, potentially async action creators. The simplest example of middleware is redux-thunk. “Thunk” middleware lets you write action creators as “thunks”, that is, functions returning functions. This inverts the control: you will get dispatch as an argument, so you can write an action creator that dispatches many times. 
+
+Using the applyMiddleware() store enhancer from Redux to include redux-thunk in the dispatch mechanism:
+
+~~~JavaScript
+import { createStore, applyMiddleware } from 'redux';
+import thunk from 'redux-thunk';
+import rootReducer from './reducers';
+
+// Note: this API requires redux@>=3.1.0
+const store = createStore(
+  rootReducer,
+  applyMiddleware(thunk)
+);
+
+// ...
+~~~
+
+Consider the code above rewritten with redux-thunk:
+
+~~~JavaScript
+// file: actionCreator.js
+export function loadPosts(userId) {
+  // Interpreted by the thunk middleware:
+  return function (dispatch, getState) {
+    let { posts } = getState()
+    if (posts[userId]) {
+      // There is cached data! Don't do anything.
+      return
+    }
+
+    dispatch({
+      type: 'LOAD_POSTS_REQUEST',
+      userId
+    })
+
+    // Dispatch vanilla actions asynchronously
+    fetch(`http://myapi.com/users/${userId}/posts`).then(
+      response => dispatch({
+        type: 'LOAD_POSTS_SUCCESS',
+        userId,
+        response
+      }),
+      error => dispatch({
+        type: 'LOAD_POSTS_FAILURE',
+        userId,
+        error
+      })
+    )
+  }
+}
+~~~~
+
+~~~JavaScript
+// file: UserInfo.js
+import { Component } from 'react'
+import { connect } from 'react-redux'
+import { loadPosts } from './actionCreators'
+
+class Posts extends Component {
+  componentDidMount() {
+    this.props.dispatch(loadPosts(this.props.userId))
+  }
+
+  componentWillReceiveProps(nextProps) {
+    if (nextProps.userId !== this.props.userId) {
+      this.props.dispatch(loadPosts(nextProps.userId))
+    }
+  }
+
+  render() {
+    if (this.props.isFetching) {
+      return <p>Loading...</p>
+    }
+
+    let posts = this.props.posts.map(post =>
+      <Post post={post} key={post.id} />
+    )
+
+    return <div>{posts}</div>
+  }
+}
+
+export default connect(state => ({
+  posts: state.posts
+}))(Posts)
+~~~
 
 
 # HMR
