@@ -343,3 +343,5 @@ Stateless function component is not supported and page won't be refreshed automa
 * [Glossary](http://redux.js.org/docs/Glossary.html)
 * [Redux Examples](http://redux.js.org/docs/introduction/Examples.html)
 * [ReduxUsageWithReact](http://redux.js.org/docs/basics/UsageWithReact.html)
+* [Presentational and Container Components](https://medium.com/@dan_abramov/smart-and-dumb-components-7ca2f9a7c7d0#.eohh39mm5)
+* [Container Components](https://medium.com/@learnreact/container-components-c0e67432e005#.dv40d1jze)
